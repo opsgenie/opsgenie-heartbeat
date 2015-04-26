@@ -46,8 +46,8 @@ func main() {
 			Usage: "amount of time OpsGenie waits for a send request before creating alert",
 		},
 		cli.StringFlag{
-			Name:  "intervalUnit, u",
 			Value: "minutes",
+			Name:  "intervalUnit, u",
 			Usage: "minutes, hours or days",
 		},
 		cli.BoolFlag{
@@ -62,7 +62,7 @@ func main() {
 			Usage:       "Adds a new heartbeat and then sends a hartbeat",
 			Description: "Adds a new heartbeat to OpsGenie with the configuration from the given flags. If the heartbeat with the name specified in -name exists, updates the heartbeat accordingly and enables it. It also sends a heartbeat message to activate the heartbeat.",
 			Action: func(c *cli.Context) {
-				startHeartbeat(c.String("apiKey"), c.String("name"), c.String("description"), c.Int("interval"), c.String("intervalUnit"))
+				startHeartbeat(c.GlobalString("apiKey"), c.GlobalString("name"), c.GlobalString("description"), c.GlobalInt("interval"), c.GlobalString("intervalUnit"))
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func main() {
 			Usage:       "Disables the heartbeat",
 			Description: "Disables the heartbeat specified with -name, or deletes it if -delete is true. This can be used to end the heartbeat monitoring that was previously started.",
 			Action: func(c *cli.Context) {
-				stopHeartbeat(c.String("apiKey"), c.String("name"), c.Bool("delete"))
+				stopHeartbeat(c.GlobalString("apiKey"), c.GlobalString("name"), c.GlobalBool("delete"))
 			},
 		},
 		{
@@ -78,7 +78,7 @@ func main() {
 			Usage:       "Sends a heartbeat",
 			Description: "Sends a heartbeat message to reactivate the heartbeat specified with -name.",
 			Action: func(c *cli.Context) {
-				sendHeartbeat(c.String("apiKey"), c.String("name"))
+				sendHeartbeat(c.GlobalString("apiKey"), c.GlobalString("name"))
 			},
 		},
 	}
@@ -163,6 +163,7 @@ func updateHeartbeatWithEnabledTrue(apiKey string, name string, description stri
 }
 
 func sendHeartbeat(apiKey string, name string) {
+	fmt.Print(apiKey)
 	var contentParams = make(map[string]interface{})
 	contentParams["apiKey"] = apiKey
 	contentParams["name"] = name
