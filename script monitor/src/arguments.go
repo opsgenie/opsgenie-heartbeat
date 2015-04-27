@@ -1,6 +1,9 @@
 package main
 
-import "github.com/codegangsta/cli"
+import (
+	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
+)
 
 var SharedFlags = []cli.Flag{
 	cli.StringFlag{
@@ -75,5 +78,8 @@ type OpsArgs struct {
 }
 
 func extractArgs(c *cli.Context) OpsArgs {
+	if c.GlobalString("apiKey") == "" || c.GlobalString("name") == "" {
+		log.Fatal("[apiKey] and [name] are mandatory")
+	}
 	return OpsArgs{c.GlobalString("apiKey"), c.GlobalString("name"), c.String("description"), c.Int("interval"), c.String("intervalUnit"), c.Bool("delete")}
 }
