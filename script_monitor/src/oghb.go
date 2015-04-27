@@ -163,24 +163,7 @@ func createErrorResponse(responseBody []byte) ErrorResponse {
 }
 
 func doHttpRequest(method string, urlSuffix string, requestParameters map[string]string, contentParameters map[string]interface{}) (int, []byte) {
-	var buf, _ = json.Marshal(contentParameters)
-	body := bytes.NewBuffer(buf)
-
-	var Url *url.URL
-	Url, err := url.Parse(apiUrl + urlSuffix)
-	if err != nil {
-		panic(err)
-	}
-	parameters := url.Values{}
-	for k, v := range requestParameters {
-		parameters.Add(k, v)
-	}
-	Url.RawQuery = parameters.Encode()
-
-	request, _ := http.NewRequest(method, Url.String(), body)
-	client := getHttpClient(TIMEOUT)
-
-	resp, error := client.Do(request)
+	resp, error := getHttpClient().Do(createRequest(method, urlSuffix, requestParameters, contentParameters))
 	if error == nil {
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
@@ -200,16 +183,42 @@ func doHttpRequest(method string, urlSuffix string, requestParameters map[string
 	return 0, nil
 }
 
-func getHttpClient(seconds int) *http.Client {
+func createRequest(method string, urlSuffix string, requestParameters map[string]string, contentParameters map[string]interface{}) *http.Request {
+	var body, err = json.Marshal(contentParameters)
+	handleError(err)
+	request, err := http.NewRequest(method, createUrl(urlSuffix, requestParameters).String(), bytes.NewReader(body))
+	handleError(err)
+	return request
+}
+
+func createUrl(urlSuffix string, requestParameters map[string]string) *url.URL {
+	var Url *url.URL
+	Url, err := url.Parse(apiUrl + urlSuffix)
+	handleError(err)
+	parameters := url.Values{}
+	for k, v := range requestParameters {
+		parameters.Add(k, v)
+	}
+	Url.RawQuery = parameters.Encode()
+	return Url
+}
+
+func handleError(err error) {
+	if err != nil {
+		logAndExit(err.Error())
+	}
+}
+
+func getHttpClient() *http.Client {
 	client := &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			Dial: func(netw, addr string) (net.Conn, error) {
-				conn, err := net.DialTimeout(netw, addr, time.Second*time.Duration(seconds))
+				conn, err := net.DialTimeout(netw, addr, time.Second*time.Duration(TIMEOUT))
 				if err != nil {
 					return nil, err
 				}
-				conn.SetDeadline(time.Now().Add(time.Second * time.Duration(seconds)))
+				conn.SetDeadline(time.Now().Add(time.Second * time.Duration(TIMEOUT)))
 				return conn, nil
 			},
 		},
