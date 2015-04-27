@@ -35,25 +35,6 @@ func main() {
 			Value: "",
 			Usage: "heartbeat name",
 		},
-		cli.StringFlag{
-			Name:  "description, d",
-			Value: "",
-			Usage: "heartbeat description",
-		},
-		cli.IntFlag{
-			Name:  "interval, i",
-			Value: 10,
-			Usage: "amount of time OpsGenie waits for a send request before creating alert",
-		},
-		cli.StringFlag{
-			Value: "minutes",
-			Name:  "intervalUnit, u",
-			Usage: "minutes, hours or days",
-		},
-		cli.BoolFlag{
-			Name:  "delete",
-			Usage: "elete the heartbeat on stop",
-		},
 	}
 
 	app.Commands = []cli.Command{
@@ -61,6 +42,23 @@ func main() {
 			Name:        "start",
 			Usage:       "Adds a new heartbeat and then sends a hartbeat",
 			Description: "Adds a new heartbeat to OpsGenie with the configuration from the given flags. If the heartbeat with the name specified in -name exists, updates the heartbeat accordingly and enables it. It also sends a heartbeat message to activate the heartbeat.",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "description, d",
+					Value: "",
+					Usage: "Heartbeat description",
+				},
+				cli.IntFlag{
+					Name:  "interval, i",
+					Value: 10,
+					Usage: "Amount of time OpsGenie waits for a send request before creating alert",
+				},
+				cli.StringFlag{
+					Value: "minutes",
+					Name:  "intervalUnit, u",
+					Usage: "[minutes, hours or days]",
+				},
+			},
 			Action: func(c *cli.Context) {
 				startHeartbeat(extractArgs(c))
 			},
@@ -69,6 +67,12 @@ func main() {
 			Name:        "stop",
 			Usage:       "Disables the heartbeat",
 			Description: "Disables the heartbeat specified with -name, or deletes it if -delete is true. This can be used to end the heartbeat monitoring that was previously started.",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "delete",
+					Usage: "Delete the heartbeat",
+				},
+			},
 			Action: func(c *cli.Context) {
 				stopHeartbeat(extractArgs(c))
 			},
@@ -96,7 +100,7 @@ type OpsArgs struct {
 }
 
 func extractArgs(c *cli.Context) OpsArgs {
-	return OpsArgs{c.GlobalString("apiKey"), c.GlobalString("name"), c.GlobalString("description"), c.GlobalInt("interval"), c.GlobalString("intervalUnit"), c.GlobalBool("delete")}
+	return OpsArgs{c.GlobalString("apiKey"), c.GlobalString("name"), c.String("description"), c.Int("interval"), c.String("intervalUnit"), c.Bool("delete")}
 }
 
 func startHeartbeat(args OpsArgs) {
