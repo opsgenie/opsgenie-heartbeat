@@ -163,24 +163,12 @@ func createErrorResponse(responseBody []byte) ErrorResponse {
 }
 
 func doHttpRequest(method string, urlSuffix string, requestParameters map[string]string, contentParameters map[string]interface{}) (int, []byte) {
-	resp, error := getHttpClient().Do(createRequest(method, urlSuffix, requestParameters, contentParameters))
-	if error == nil {
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			return resp.StatusCode, body
-		} else {
-			fmt.Println("Couldn't read the response from opsgenie")
-			panic(err)
-		}
-	} else {
-		fmt.Println("Couldn't send the request to opsgenie")
-		panic(error)
-	}
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-	return 0, nil
+	resp, err := getHttpClient().Do(createRequest(method, urlSuffix, requestParameters, contentParameters))
+	handleError(err)
+	body, err := ioutil.ReadAll(resp.Body)
+	handleError(err)
+	defer resp.Body.Close()
+	return resp.StatusCode, body
 }
 
 func createRequest(method string, urlSuffix string, requestParameters map[string]string, contentParameters map[string]interface{}) *http.Request {
