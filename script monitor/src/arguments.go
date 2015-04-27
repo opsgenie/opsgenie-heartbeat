@@ -81,5 +81,8 @@ func extractArgs(c *cli.Context) OpsArgs {
 	if c.GlobalString("apiKey") == "" || c.GlobalString("name") == "" {
 		log.Fatal("[apiKey] and [name] are mandatory")
 	}
+	if c.String("intervalUnit") != "" && (c.String("intervalUnit") == "minutes" || c.String("intervalUnit") == "hours" || c.String("intervalUnit") == "days") {
+		log.Fatal("[intervalUnit] can only be one of the following: mintes, hours or days")
+	}
 	return OpsArgs{c.GlobalString("apiKey"), c.GlobalString("name"), c.String("description"), c.Int("interval"), c.String("intervalUnit"), c.Bool("delete")}
 }
