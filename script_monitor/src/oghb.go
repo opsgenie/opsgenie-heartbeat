@@ -44,10 +44,7 @@ func startHeartbeat(args OpsArgs) {
 }
 
 func getHeartbeat(args OpsArgs) *Heartbeat {
-	var requestParams = make(map[string]string)
-	requestParams["apiKey"] = args.apiKey
-	requestParams["name"] = args.name
-	responseBody := doHttpRequest("GET", "/v1/json/heartbeat/", requestParams, nil)
+	responseBody := doHttpRequest("GET", "/v1/json/heartbeat/", mandatoryRequestParams(args), nil)
 	heartbeat := &Heartbeat{}
 	err := json.Unmarshal(responseBody, &heartbeat)
 	handleError(err)
@@ -56,50 +53,25 @@ func getHeartbeat(args OpsArgs) *Heartbeat {
 }
 
 func addHeartbeat(args OpsArgs) {
-	var contentParams = make(map[string]interface{})
-	contentParams["apiKey"] = args.apiKey
-	contentParams["name"] = args.name
-	if args.description != "" {
-		contentParams["description"] = args.description
-	}
-	if args.interval != 0 {
-		contentParams["interval"] = args.interval
-	}
-	if args.intervalUnit != "" {
-		contentParams["intervalUnit"] = args.intervalUnit
-	}
-	doHttpRequest("POST", "/v1/json/heartbeat/", nil, contentParams)
+	doHttpRequest("POST", "/v1/json/heartbeat/", nil, allContentParams(args))
 	log.Info("Successfully added heartbeat [" + args.name + "]")
 }
 
 func updateHeartbeatWithEnabledTrue(args OpsArgs, heartbeat Heartbeat) {
-	var contentParams = make(map[string]interface{})
-	contentParams["apiKey"] = args.apiKey
+	var contentParams = allContentParams(args)
 	contentParams["id"] = heartbeat.Id
 	contentParams["enabled"] = true
-	if args.description != "" {
-		contentParams["description"] = args.description
-	}
-	if args.interval != 0 {
-		contentParams["interval"] = args.interval
-	}
-	if args.intervalUnit != "" {
-		contentParams["intervalUnit"] = args.intervalUnit
-	}
 	doHttpRequest("POST", "/v1/json/heartbeat", nil, contentParams)
 	log.Info("Successfully enabled and updated heartbeat [" + args.name + "]")
 }
 
 func sendHeartbeat(args OpsArgs) {
-	var contentParams = make(map[string]interface{})
-	contentParams["apiKey"] = args.apiKey
-	contentParams["name"] = args.name
-	doHttpRequest("POST", "/v1/json/heartbeat/send", nil, contentParams)
+	doHttpRequest("POST", "/v1/json/heartbeat/send", nil, mandatoryContentParams(args))
 	log.Info("Successfully sent heartbeat [" + args.name + "]")
 }
 
 func stopHeartbeat(args OpsArgs) {
-	if args.delete == true {
+	if args.delete {
 		deleteHeartbeat(args)
 	} else {
 		disableHeartbeat(args)
@@ -107,19 +79,41 @@ func stopHeartbeat(args OpsArgs) {
 }
 
 func deleteHeartbeat(args OpsArgs) {
-	var requestParams = make(map[string]string)
-	requestParams["apiKey"] = args.apiKey
-	requestParams["name"] = args.name
-	doHttpRequest("DELETE", "/v1/json/heartbeat", requestParams, nil)
+	doHttpRequest("DELETE", "/v1/json/heartbeat", mandatoryRequestParams(args), nil)
 	log.Info("Successfully deleted heartbeat [" + args.name + "]")
 }
 
 func disableHeartbeat(args OpsArgs) {
+	doHttpRequest("POST", "/v1/json/heartbeat/disable", nil, mandatoryContentParams(args))
+	log.Info("Successfully disabled heartbeat [" + args.name + "]")
+}
+
+func mandatoryContentParams(args OpsArgs) map[string]interface{} {
 	var contentParams = make(map[string]interface{})
 	contentParams["apiKey"] = args.apiKey
 	contentParams["name"] = args.name
-	doHttpRequest("POST", "/v1/json/heartbeat/disable", nil, contentParams)
-	log.Info("Successfully disabled heartbeat [" + args.name + "]")
+	return contentParams
+}
+
+func allContentParams(args OpsArgs) map[string]interface{} {
+	var contentParams = mandatoryContentParams(args)
+	if args.description != "" {
+		contentParams["description"] = args.description
+	}
+	if args.interval != 0 {
+		contentParams["interval"] = args.interval
+	}
+	if args.intervalUnit != "" {
+		contentParams["intervalUnit"] = args.intervalUnit
+	}
+	return contentParams
+}
+
+func mandatoryRequestParams(args OpsArgs) map[string]string {
+	var requestParams = make(map[string]string)
+	requestParams["apiKey"] = args.apiKey
+	requestParams["name"] = args.name
+	return requestParams
 }
 
 func createErrorResponse(responseBody []byte) ErrorResponse {
