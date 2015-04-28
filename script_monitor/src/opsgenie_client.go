@@ -118,12 +118,12 @@ func doHttpRequest(method string, urlSuffix string, requestParameters map[string
 func createRequest(method string, urlSuffix string, requestParameters map[string]string, contentParameters map[string]interface{}) *http.Request {
 	var body, err = json.Marshal(contentParameters)
 	handleError(err)
-	request, err := http.NewRequest(method, createUrl(urlSuffix, requestParameters).String(), bytes.NewReader(body))
+	request, err := http.NewRequest(method, createUrl(urlSuffix, requestParameters), bytes.NewReader(body))
 	handleError(err)
 	return request
 }
 
-func createUrl(urlSuffix string, requestParameters map[string]string) *url.URL {
+func createUrl(urlSuffix string, requestParameters map[string]string) string {
 	var Url *url.URL
 	Url, err := url.Parse(apiUrl + urlSuffix)
 	handleError(err)
@@ -132,7 +132,7 @@ func createUrl(urlSuffix string, requestParameters map[string]string) *url.URL {
 		parameters.Add(k, v)
 	}
 	Url.RawQuery = parameters.Encode()
-	return Url
+	return Url.String()
 }
 
 func handleError(err error) {
