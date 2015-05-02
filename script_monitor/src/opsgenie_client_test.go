@@ -1,12 +1,25 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
+
+var testArgs = OpsArgs{"testKey", "testName", "testDescription", 99, "month", time.Second * 10, true}
 
 func TestCreateUrl(t *testing.T) {
 	var requestParams = make(map[string]string)
 	requestParams["apiKey"] = "test"
 	var url = createUrl("/v1/test", requestParams)
-	if url != "https://api.opsgenie.com/v1/test?apiKey=test" {
-		t.Errorf("Url not correct is [%s] but should be [%s]", url, "dd")
+	var testUrl = "https://api.opsgenie.com/v1/test?apiKey=test"
+	if url != testUrl {
+		t.Errorf("Url not correct is [%s] but should be [%s]", url, testUrl)
+	}
+}
+
+func TestAllContentParams(t *testing.T) {
+	var all = allContentParams(testArgs)
+	if all["apiKey"] != testArgs.apiKey || all["name"] != testArgs.name || all["description"] != testArgs.description || all["interval"] != testArgs.interval || all["intervalUnit"] != testArgs.intervalUnit {
+		t.Errorf("OpsArgs [%+v] are not the same as all content params [%s]", testArgs, all)
 	}
 }
