@@ -164,11 +164,11 @@ func getHttpClient() *http.Client {
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			Dial: func(netw, addr string) (net.Conn, error) {
-				conn, err := net.DialTimeout(netw, addr, time.Second*time.Duration(TIMEOUT))
+				conn, err := net.DialTimeout(netw, addr, TIMEOUT)
 				if err != nil {
 					return nil, err
 				}
-				conn.SetDeadline(time.Now().Add(time.Second * time.Duration(TIMEOUT)))
+				conn.SetDeadline(time.Now().Add(TIMEOUT))
 				return conn, nil
 			},
 		},
