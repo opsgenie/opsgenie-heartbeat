@@ -33,16 +33,24 @@ func startHeartbeatLoop(args OpsArgs) {
 }
 
 func getHeartbeat(args OpsArgs) *Heartbeat {
-	responseBody := doHttpRequest("GET", "/v1/json/heartbeat/", mandatoryRequestParams(args), nil)
+	code, body := doHttpRequest("GET", "/v1/json/heartbeat/", mandatoryRequestParams(args), nil)
+	if code != 200 {
+		errorResponse := createErrorResponse(body)
+		if code == 400 && errorResponse.Code == 17 {
+			log.Infof("Heartbeat [%s] doesn't exist", args.name)
+			return nil
+		}
+		logAndExit(fmt.Sprintf("%#v", errorResponse))
+	}
 	heartbeat := &Heartbeat{}
-	err := json.Unmarshal(responseBody, &heartbeat)
+	err := json.Unmarshal(body, &heartbeat)
 	handleError(err)
 	log.Info("Successfully retrieved heartbeat [" + args.name + "]")
 	return heartbeat
 }
 
 func addHeartbeat(args OpsArgs) {
-	doHttpRequest("POST", "/v1/json/heartbeat/", nil, allContentParams(args))
+	doOpsGenieHttpRequest("POST", "/v1/json/heartbeat/", nil, allContentParams(args))
 	log.Info("Successfully added heartbeat [" + args.name + "]")
 }
 
@@ -50,12 +58,12 @@ func updateHeartbeatWithEnabledTrue(args OpsArgs, heartbeat Heartbeat) {
 	var contentParams = allContentParams(args)
 	contentParams["id"] = heartbeat.Id
 	contentParams["enabled"] = true
-	doHttpRequest("POST", "/v1/json/heartbeat", nil, contentParams)
+	doOpsGenieHttpRequest("POST", "/v1/json/heartbeat", nil, contentParams)
 	log.Info("Successfully enabled and updated heartbeat [" + args.name + "]")
 }
 
 func sendHeartbeat(args OpsArgs) {
-	doHttpRequest("POST", "/v1/json/heartbeat/send", nil, mandatoryContentParams(args))
+	doOpsGenieHttpRequest("POST", "/v1/json/heartbeat/send", nil, mandatoryContentParams(args))
 	log.Info("Successfully sent heartbeat [" + args.name + "]")
 }
 
@@ -77,12 +85,12 @@ func stopHeartbeat(args OpsArgs) {
 }
 
 func deleteHeartbeat(args OpsArgs) {
-	doHttpRequest("DELETE", "/v1/json/heartbeat", mandatoryRequestParams(args), nil)
+	doOpsGenieHttpRequest("DELETE", "/v1/json/heartbeat", mandatoryRequestParams(args), nil)
 	log.Info("Successfully deleted heartbeat [" + args.name + "]")
 }
 
 func disableHeartbeat(args OpsArgs) {
-	doHttpRequest("POST", "/v1/json/heartbeat/disable", nil, mandatoryContentParams(args))
+	doOpsGenieHttpRequest("POST", "/v1/json/heartbeat/disable", nil, mandatoryContentParams(args))
 	log.Info("Successfully disabled heartbeat [" + args.name + "]")
 }
 
@@ -121,16 +129,21 @@ func createErrorResponse(responseBody []byte) ErrorResponse {
 	return *errResponse
 }
 
-func doHttpRequest(method string, urlSuffix string, requestParameters map[string]string, contentParameters map[string]interface{}) []byte {
+func doOpsGenieHttpRequest(method string, urlSuffix string, requestParameters map[string]string, contentParameters map[string]interface{}) []byte {
+	code, body := doHttpRequest(method, urlSuffix, requestParameters, contentParameters)
+	if code != 200 {
+		logAndExit(fmt.Sprintf("%#v", createErrorResponse(body)))
+	}
+	return body
+}
+
+func doHttpRequest(method string, urlSuffix string, requestParameters map[string]string, contentParameters map[string]interface{}) (int, []byte) {
 	resp, err := getHttpClient().Do(createRequest(method, urlSuffix, requestParameters, contentParameters))
 	handleError(err)
 	body, err := ioutil.ReadAll(resp.Body)
 	handleError(err)
-	if resp.StatusCode != 200 {
-		logAndExit(fmt.Sprintf("%#v", createErrorResponse(body)))
-	}
 	defer resp.Body.Close()
-	return body
+	return resp.StatusCode, body
 }
 
 func createRequest(method string, urlSuffix string, requestParameters map[string]string, contentParameters map[string]interface{}) *http.Request {
