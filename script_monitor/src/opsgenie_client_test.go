@@ -19,14 +19,22 @@ func TestCreateUrl(t *testing.T) {
 
 func TestAllContentParams(t *testing.T) {
 	var all = allContentParams(testArgs)
-	if all["apiKey"] != testArgs.apiKey && all["name"] != testArgs.name && all["description"] != testArgs.description && all["interval"] != testArgs.interval && all["intervalUnit"] != testArgs.intervalUnit {
+	if all["apiKey"] != testArgs.apiKey || all["name"] != testArgs.name || all["description"] != testArgs.description || all["interval"] != testArgs.interval || all["intervalUnit"] != testArgs.intervalUnit {
 		t.Errorf("OpsArgs [%+v] are not the same as all content params [%s]", testArgs, all)
 	}
 }
 
 func TestMandatoryRequestParams(t *testing.T) {
 	var params = mandatoryRequestParams(testArgs)
-	if params["apiKey"] != testArgs.apiKey && params["name"] != testArgs.name {
+	if params["apiKey"] != testArgs.apiKey || params["name"] != testArgs.name {
 		t.Errorf("Requested params [%s] are not the same as from OpsArgs [%+v]", params, testArgs)
+	}
+}
+
+func TestCreateErrorResponse(t *testing.T) {
+	json := `{"code":10, "error": "test error"}`
+	error := createErrorResponse([]byte(json))
+	if error.Code != 10 || error.Message != "test error" {
+		t.Errorf("Error [%+v] does not correspond to json [%s]", error, json)
 	}
 }
