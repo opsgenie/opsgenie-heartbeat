@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/arminc/opsgenie-heartbeat/script monitor/src",
+	"ImportPath": "github.com/arminc/opsgenie-heartbeat/script_monitor/src",
 	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
