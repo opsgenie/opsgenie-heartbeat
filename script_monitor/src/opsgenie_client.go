@@ -13,6 +13,11 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+func startHeartbeatAndSend(args OpsArgs) {
+	startHeartbeat(args)
+	sendHeartbeat(args)
+}
+
 func startHeartbeat(args OpsArgs) {
 	heartbeat := getHeartbeat(args)
 	if heartbeat == nil {
@@ -20,7 +25,11 @@ func startHeartbeat(args OpsArgs) {
 	} else {
 		updateHeartbeatWithEnabledTrue(args, *heartbeat)
 	}
-	sendHeartbeat(args)
+}
+
+func startHeartbeatLoop(args OpsArgs) {
+	startHeartbeat(args)
+	sendHeartbeatLoop(args)
 }
 
 func getHeartbeat(args OpsArgs) *Heartbeat {
@@ -48,6 +57,15 @@ func updateHeartbeatWithEnabledTrue(args OpsArgs, heartbeat Heartbeat) {
 func sendHeartbeat(args OpsArgs) {
 	doHttpRequest("POST", "/v1/json/heartbeat/send", nil, mandatoryContentParams(args))
 	log.Info("Successfully sent heartbeat [" + args.name + "]")
+}
+
+func sendHeartbeatLoop(args OpsArgs) {
+	ticker := time.NewTicker(time.Second * args.loopInterval)
+	go func() {
+		for range ticker.C {
+			sendHeartbeat(args)
+		}
+	}()
 }
 
 func stopHeartbeat(args OpsArgs) {
