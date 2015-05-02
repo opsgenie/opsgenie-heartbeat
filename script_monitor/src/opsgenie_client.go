@@ -68,12 +68,9 @@ func sendHeartbeat(args OpsArgs) {
 }
 
 func sendHeartbeatLoop(args OpsArgs) {
-	ticker := time.NewTicker(time.Second * args.loopInterval)
-	go func() {
-		for range ticker.C {
-			sendHeartbeat(args)
-		}
-	}()
+	for _ = range time.Tick(args.loopInterval) {
+		sendHeartbeat(args)
+	}
 }
 
 func stopHeartbeat(args OpsArgs) {
