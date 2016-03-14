@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
-	"net/http"
-	"net/url"
-	"net"
-	"time"
 	"fmt"
 	"io/ioutil"
+	"net"
+	"net/http"
+	"net/url"
+	"time"
 )
 
 var TIMEOUT = 30
@@ -46,13 +46,13 @@ func parseFlags() {
 	delete = flag.Bool("delete", false, "delete the heartbeat on stop")
 	flag.Parse()
 
-	if *action == ""{
+	if *action == "" {
 		panic("-action flag must be provided")
 	}
-	if *apiKey == ""{
+	if *apiKey == "" {
 		panic("-apiKey flag must be provided")
 	}
-	if *name == ""{
+	if *name == "" {
 		panic("-name flag must be provided")
 	}
 }
@@ -67,13 +67,13 @@ func startHeartbeat() {
 	sendHeartbeat()
 }
 
-func getHeartbeat() (*Heartbeat) {
+func getHeartbeat() *heartbeat {
 	var requestParams = make(map[string]string)
 	requestParams["apiKey"] = *apiKey
 	requestParams["name"] = *name
 	statusCode, responseBody := doHttpRequest("GET", "/v1/json/heartbeat/", requestParams, nil)
 	if statusCode == 200 {
-		heartbeat := &Heartbeat{}
+		heartbeat := &heartbeat{}
 		err := json.Unmarshal(responseBody, &heartbeat)
 		if err != nil {
 			panic(err)
@@ -82,7 +82,7 @@ func getHeartbeat() (*Heartbeat) {
 		return heartbeat
 	} else {
 		errorResponse := createErrorResponse(responseBody)
-		if (statusCode == 400 && errorResponse.Code == 17) {
+		if statusCode == 400 && errorResponse.Code == 17 {
 			fmt.Println("Heartbeat [" + *name + "] doesn't exist")
 			return nil
 		}
@@ -111,10 +111,10 @@ func addHeartbeat() {
 	fmt.Println("Successfully added heartbeat [" + *name + "]")
 }
 
-func updateHeartbeatWithEnabledTrue(heartbeat Heartbeat) {
+func updateHeartbeatWithEnabledTrue(heartbeat heartbeat) {
 	var contentParams = make(map[string]interface{})
 	contentParams["apiKey"] = apiKey
-	contentParams["id"] = heartbeat.Id
+	contentParams["name"] = heartbeat.Name
 	contentParams["enabled"] = true
 	if *description != "" {
 		contentParams["description"] = description
@@ -145,15 +145,15 @@ func sendHeartbeat() {
 	fmt.Println("Successfully sent heartbeat [" + *name + "]")
 }
 
-func stopHeartbeat(){
-	if *delete == true{
+func stopHeartbeat() {
+	if *delete == true {
 		deleteHeartbeat()
-	} else{
+	} else {
 		disableHeartbeat()
 	}
 }
 
-func deleteHeartbeat(){
+func deleteHeartbeat() {
 	var requestParams = make(map[string]string)
 	requestParams["apiKey"] = *apiKey
 	requestParams["name"] = *name
@@ -165,7 +165,7 @@ func deleteHeartbeat(){
 	fmt.Println("Successfully deleted heartbeat [" + *name + "]")
 }
 
-func disableHeartbeat(){
+func disableHeartbeat() {
 	var contentParams = make(map[string]interface{})
 	contentParams["apiKey"] = apiKey
 	contentParams["name"] = name
@@ -177,7 +177,7 @@ func disableHeartbeat(){
 	fmt.Println("Successfully disabled heartbeat [" + *name + "]")
 }
 
-func createErrorResponse(responseBody []byte) (ErrorResponse){
+func createErrorResponse(responseBody []byte) ErrorResponse {
 	errResponse := &ErrorResponse{}
 	err := json.Unmarshal(responseBody, &errResponse)
 	if err != nil {
@@ -205,21 +205,20 @@ func doHttpRequest(method string, urlSuffix string, requestParameters map[string
 	client := getHttpClient(TIMEOUT)
 
 	resp, error := client.Do(request)
+    if resp != nil {
+		defer resp.Body.Close()
+	}
 	if error == nil {
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
 			return resp.StatusCode, body
-		}else {
-			fmt.Println("Couldn't read the response from opsgenie")
-			panic(err)
 		}
-	}else {
+		fmt.Println("Couldn't read the response from opsgenie")
+		panic(err)
+	} else {
 		fmt.Println("Couldn't send the request to opsgenie")
 		panic(error)
-	}
-	if resp != nil {
-		defer resp.Body.Close()
 	}
 	return 0, nil
 }
@@ -241,11 +240,11 @@ func getHttpClient(seconds int) *http.Client {
 	return client
 }
 
-type Heartbeat struct {
-	Id string `json:"id"`
+type heartbeat struct {
+	Name string `json:"name"`
 }
 
-type ErrorResponse struct{
-	Code    int `json:"code"`
+type ErrorResponse struct {
+	Code    int    `json:"code"`
 	Message string `json:"error"`
 }
