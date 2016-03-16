@@ -4,6 +4,8 @@ Script monitoring client can create a new heartbeat in OpsGenie and send a signa
 
 You can use this plugin to monitor one-time jobs of your application using OpsGenie Heartbeat. You run the plugin with -action=start flag at the start of your script task. You specify a timetoexpire. Run the plugin again with -action=stop flag at the end. If the job doesn't end in the specified amount of time and so can't run the stop command,  OpsGenie will create an alert and notify you through voice call, e-mail, sms, mobile app etc. 
 
+You can find the latest release for the plugin [here](https://github.com/opsgenie/opsgenie-heartbeat/releases/latest)
+
 ### Flags for usage:
 **-apiKey** is mandatory. Use the API key of your OpsGenie Heartbeat integration.
 **-name** is mandatory. You can use an existing hearbeat's name from [OpsGenie Heartbeats page](https://www.opsgenie.com/heartbeat/) or enter a new one for the plugin to add automatically.
