@@ -201,7 +201,13 @@ func doHttpRequest(method string, urlSuffix string, requestParameters map[string
 	}
 	Url.RawQuery = parameters.Encode()
 
-	request, _ := http.NewRequest(method, Url.String(), body)
+	var request *http.Request
+	var _ error
+	if contentParameters == nil {
+		request, _ = http.NewRequest(method, Url.String(), nil)
+	} else {
+		request, _ = http.NewRequest(method, Url.String(), body)
+	}
 	client := getHttpClient(TIMEOUT)
 
 	resp, error := client.Do(request)
