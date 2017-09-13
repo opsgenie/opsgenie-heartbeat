@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
+	log "github.com/Sirupsen/logrus"
 )
 
 var TIMEOUT = 30
@@ -32,7 +32,7 @@ func main() {
 	} else if *action == "send" {
 		sendHeartbeat()
 	} else {
-		panic("Unknown action flag; use start or stop")
+		log.Error("Unknown action flag; use start or stop")
 	}
 }
 
@@ -49,13 +49,13 @@ func parseFlags() {
 	flag.Parse()
 
 	if *action == "" {
-		panic("-action flag must be provided")
+		log.Error("-action flag must be provided")
 	}
 	if *apiKey == "" {
-		panic("-apiKey flag must be provided")
+		log.Error("-apiKey flag must be provided")
 	}
 	if *name == "" {
-		panic("-name flag must be provided")
+		log.Error("-name flag must be provided")
 	}
 }
 
@@ -78,18 +78,19 @@ func getHeartbeat() string {
 		heartbeatName := heartbeat.Data["name"].(string)
 
 		if err != nil {
-			panic(err)
+			log.Error(err)
 		}
-		fmt.Println("Successfully retrieved heartbeat [" + *name + "]")
+		log.Info("Successfully retrieved heartbeat [" + *name + "]")
 		return heartbeatName
 	} else {
 		errorResponse := createErrorResponse(responseBody)
 		if statusCode > 399 && statusCode < 500 {
-			fmt.Println("Heartbeat [" + *name + "] doesn't exist")
+			log.Info("Heartbeat [" + *name + "] doesn't exist")
 			return ""
 		}
-		fmt.Println(errorResponse)
-		panic("Failed to get heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
+		log.Info(errorResponse)
+		log.Error("Failed to get heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
+		return ""
 	}
 }
 
@@ -110,9 +111,9 @@ func addHeartbeat() {
 	statusCode, responseBody := doHttpRequest("POST", "/v2/heartbeats", nil, contentParams)
 	if statusCode > 399 && statusCode < 500 {
 		errorResponse := createErrorResponse(responseBody)
-		panic("Failed to add heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
+		log.Error("Failed to add heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
 	}
-	fmt.Println("Successfully added heartbeat [" + *name + "]")
+	log.Info("Successfully added heartbeat [" + *name + "]")
 }
 
 func updateHeartbeatWithEnabledTrue(heartbeatName string) {
@@ -131,9 +132,9 @@ func updateHeartbeatWithEnabledTrue(heartbeatName string) {
 
 	if statusCode > 399 && statusCode < 500  {
 		errorResponse := createErrorResponse(responseBody)
-		panic("Failed to update heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
+		log.Error("Failed to update heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
 	}
-	fmt.Println("Successfully enabled and updated heartbeat [" + *name + "]")
+	log.Info("Successfully enabled and updated heartbeat [" + *name + "]")
 }
 
 func sendHeartbeat() {
@@ -141,9 +142,9 @@ func sendHeartbeat() {
 
 	if statusCode > 399 && statusCode < 500 {
 		errorResponse := createErrorResponse(responseBody)
-		panic("Failed to send heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
+		log.Error("Failed to send heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
 	}
-	fmt.Println("Successfully sent heartbeat [" + *name + "]")
+	log.Info("Successfully sent heartbeat [" + *name + "]")
 }
 
 func stopHeartbeat() {
@@ -158,27 +159,25 @@ func deleteHeartbeat() {
 	statusCode, responseBody := doHttpRequest("DELETE", "/v2/heartbeats/" + *name, nil, nil)
 	if statusCode > 399 && statusCode < 500 {
 		errorResponse := createErrorResponse(responseBody)
-		panic("Failed to delete heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
+		log.Error("Failed to delete heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
 	}
-	fmt.Println("Successfully deleted heartbeat [" + *name + "]")
+	log.Info("Successfully deleted heartbeat [" + *name + "]")
 }
 
 func disableHeartbeat() {
 	statusCode, responseBody := doHttpRequest("POST", "/v2/heartbeats/" + *name + "/disable", nil, nil)
 	if statusCode > 399 && statusCode < 500 {
 		errorResponse := createErrorResponse(responseBody)
-		panic("Failed to disable heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
+		log.Error("Failed to disable heartbeat [" + *name + "]; response from OpsGenie:" + errorResponse.Message)
 	}
-	fmt.Println("Successfully disabled heartbeat [" + *name + "]")
+	log.Info("Successfully disabled heartbeat [" + *name + "]")
 }
 
 func createErrorResponse(responseBody []byte) ErrorResponse {
-	fmt.Println(responseBody)
 	errResponse := &ErrorResponse{}
 	err := json.Unmarshal(responseBody, &errResponse)
-	fmt.Println(err)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 	return *errResponse
 }
@@ -190,7 +189,7 @@ func doHttpRequest(method string, urlSuffix string, requestParameters map[string
 	var Url *url.URL
 	Url, err := url.Parse(*apiUrl + urlSuffix)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 	parameters := url.Values{}
 	for k, v := range requestParameters {
@@ -219,11 +218,11 @@ func doHttpRequest(method string, urlSuffix string, requestParameters map[string
 		if err == nil {
 			return resp.StatusCode, body
 		}
-		fmt.Println("Couldn't read the response from opsgenie")
-		panic(err)
+		log.Info("Couldn't read the response from opsgenie")
+		log.Error(err)
 	} else {
-		fmt.Println("Couldn't send the request to opsgenie")
-		panic(error)
+		log.Info("Couldn't send the request to opsgenie")
+		log.Error(error)
 	}
 	return 0, nil
 }
