@@ -8,13 +8,13 @@ You can find the latest release for the plugin [here](https://github.com/opsgeni
 
 ### Flags for usage:
 **-apiKey** is mandatory. Use the API key of your OpsGenie Heartbeat integration.
-**-name** is mandatory. You can use an existing hearbeat's name from [OpsGenie Heartbeats page](https://www.opsgenie.com/heartbeat/) or enter a new one for the plugin to add automatically.
+**-name** is mandatory. You can use an existing hearbeat's name from [OpsGenie Heartbeats page](https://docs.opsgenie.com/docs/heartbeat-monitoring) or enter a new one for the plugin to add automatically.
 **-action** is mandatory. Can be **start**, **stop** or **send**.
 * **start** : Adds a new heartbeat to OpsGenie with the configuration from the given flags. If the heartbeat with the name specified in -name exists, updates the heartbeat accordingly and enables it. It also sends a heartbeat message to activate the heartbeat. 
 * **stop** : Disables the heartbeat specified with -name, or deletes it if **-delete** is true. This can be used to end the heartbeat monitoring that was previously started.
 * **send** : Sends a heartbeat message to reactivate the heartbeat specified with -name.
 
-**-description** is optional. Sets the description of the heartbeat on [OpsGenie Heartbeats page](https://www.opsgenie.com/heartbeat/)
+**-description** is optional. Sets the description of the heartbeat on [OpsGenie Heartbeats page](https://docs.opsgenie.com/docs/heartbeat-monitoring)
 **-timetoexpire** is optional. Sets the expire time of the heartbeat that OpsGenie waits for a message request before creating an alert. The default value is 10.
 **-intervalUnit** is optional. Can be **minutes**, **hours** or **days**. Default value is minutes. Sets the unit for the time to expire.
 **-delete** is optional. Default value is false. Can be used to delete the heartbeat instead of disabling on **stop** commands.
